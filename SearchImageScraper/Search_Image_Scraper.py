@@ -32,6 +32,7 @@ class Image_Scraper:
     
     """
     images=[]
+    images_saved=[]
     def __init__(self,image_subject,image_number,browser_driver="chrome",file_save_name="Image",folder_destination=""):
         self.image_subject=image_subject
         self.image_number=image_number
@@ -89,6 +90,7 @@ class Image_Scraper:
                 break
             image_counter+=1
             image_name=file_destination + ' {0}.jpg'.format(image_counter-1)
+            self.images_saved.append(image_name)
             src=image.get_attribute('src')
             urllib.request.urlretrieve(src,image_name)
     def test_folder_destination(self):
