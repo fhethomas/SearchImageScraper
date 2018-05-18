@@ -13,7 +13,9 @@ the browser driver if needed
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import urllib
+import csv
 from os import path
+import os
 
 class Image_Scraper:
     """This class will find images based on criteria
@@ -33,10 +35,11 @@ class Image_Scraper:
     """
     images=[]
     images_saved=[]
-    def __init__(self,image_subject,image_number,browser_driver="chrome",file_save_name="Image",folder_destination=""):
+    def __init__(self,image_subject,image_number,browser_driver="chrome",webdriver_path='$PATH',file_save_name="Image",folder_destination=""):
         self.image_subject=image_subject
         self.image_number=image_number
         self.browser_driver=browser_driver.lower()
+        self.webdriver_path=webdriver_path
         self.file_save_name=file_save_name
         self.folder_destination=folder_destination
         self.test_folder_destination()
@@ -49,25 +52,15 @@ class Image_Scraper:
         
         #select webdriver to use - launch webdriver
         if self.browser_driver=='chrome':
-            driver=webdriver.Chrome()
+            driver=webdriver.Chrome(self.webdriver_path)
         elif self.browser_driver=='firefox':
-            driver=webdriver.FirefoxProfile
+            driver=webdriver.FirefoxProfile()
+        elif self.browser_driver=='safari':
+            driver=webdriver.Safari()
         elif self.browser_driver=='ie' or self.browser_driver=='internet explorer':
-            driver=webdriver.Ie
+            driver=webdriver.Ie()
         elif self.browser_driver=='opera':
-            driver=webdriver.Opera
-        elif self.browser_driver=='phantomjs':
-            driver=webdriver.PhantomJS
-        elif self.browser_driver=='remote':
-            driver=webdriver.Remote
-        elif self.browser_driver=='desiredcapabilities':
-            driver=webdriver.DesiredCapabilities
-        elif self.browser_driver=='actionchains':
-            driver=webdriver.ActionChains
-        elif self.browser_driver=='touchactions':
-            driver=webdriver.TouchActions
-        elif self.browser_driver=='proxy':
-            driver=webdriver.Proxy
+            driver=webdriver.Opera()
         else:
             print('invalid webdriver selected. Please ensure a valid webdriver is selected.\n Default option is set to Chrome')
             return None
@@ -89,12 +82,31 @@ class Image_Scraper:
                 print('Run complete')
                 break
             image_counter+=1
-            image_name=file_destination + ' {0}.jpg'.format(image_counter-1)
+            image_name=str(file_destination + ' {0}.jpg'.format(image_counter-1))
             self.images_saved.append(image_name)
             src=image.get_attribute('src')
-            urllib.request.urlretrieve(src,image_name)
+        # Allows this to work with Python 2
+            try:
+                urllib.request.urlretrieve(src,image_name)
+            except:
+                urllib.urlretrieve(src,image_name)
+        with open('{0}Image_List.csv'.format(self.folder_destination),'wb') as Image_List:
+            wr = csv.writer(Image_List, delimiter=',',dialect='excel')
+            for image in self.images_saved:
+                wr.writerow(image)
     def test_folder_destination(self):
         if self.folder_destination != "":
             if not path.exists(self.folder_destination):
                 print('Warning: No such folder destination exists')
+    def delete_images(self):
+        while len(self.images_saved) > 0:
+            image_file = self.images_saved[0]
+            print(image_file)
+            os.remove(image_file)
+            self.images_saved.remove(image_file)
+        print("Files removed")
+    def csv_read_in(self):
+        with open('{0}Image_List.csv'.format(self.folder_destination),'rb') as Image_List:
+            wr = csv.reader(Image_List, delimiter = ',')
+            self.images_saved = [ "".join(r) for r in wr]
 
